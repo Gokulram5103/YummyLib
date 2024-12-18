@@ -3,14 +3,25 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import RecipeGrid from "../app/components/RecipeGrid";
-import { fetchRecipes, fetchRandomRecipe } from "./lib/api";
 import { CiStar, CiUser, CiShuffle } from "react-icons/ci";
 import { ModeToggle } from "./components/ModeToggle";
 import SearchBar from "./components/SearchBar";
 
+
+const fetchSearchResults = async (searchTerm) => {
+  try {
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${searchTerm}`);
+    const data = await response.json();
+    return data.meals || []; 
+  } catch (error) {
+    console.error("Error fetching search results:", error);
+    return [];
+  }
+};
+
 export default function HomePage() {
-  const [recipes, setRecipes] = useState([]);
-  const [filteredRecipes, setFilteredRecipes] = useState([]);
+  const [recipes, setRecipes] = useState([]); 
+  const [filteredRecipes, setFilteredRecipes] = useState([]); 
   const [randomRecipe, setRandomRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -19,17 +30,17 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if we are on the client side before accessing localStorage
+   
     if (typeof window !== 'undefined') {
       const authStatus = localStorage.getItem("isAuthenticated");
       setIsAuthenticated(authStatus === "true");
     }
 
-    // Fetch recipes without authentication check
-    fetchRecipes()
+    
+    fetchSearchResults("") 
       .then((data) => {
         setRecipes(data);
-        setFilteredRecipes(data); // Initialize filtered recipes
+        setFilteredRecipes(data); 
         setLoading(false);
       })
       .catch((err) => {
@@ -38,28 +49,31 @@ export default function HomePage() {
       });
   }, []);
 
-  // Fetch random recipe when user clicks on the random icon
+ 
   const handleRandomRecipe = async () => {
-    const recipe = await fetchRandomRecipe();
-    if (recipe) {
-      setRandomRecipe(recipe); // Update state with random recipe
-      setFilteredRecipes([]); // Clear filtered recipes when random recipe is selected
+    const recipe = await fetchSearchResults("random");
+    if (recipe && recipe.length > 0) {
+      setRandomRecipe(recipe[0]); 
+      setFilteredRecipes([]); 
     }
   };
 
-  const handleSearch = (searchTerm) => {
-    const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    const filtered = recipes.filter(
-      (recipe) =>
-        recipe.strMeal && // Ensure strMeal exists
-        recipe.strMeal.toLowerCase().includes(lowerCaseSearchTerm)
-    );
-    setFilteredRecipes(filtered);
+  
+  const handleSearch = async (searchTerm) => {
+    if (!searchTerm) {
+      setFilteredRecipes(recipes); 
+      return;
+    }
+
+    setLoading(true); 
+    const results = await fetchSearchResults(searchTerm);
+    setFilteredRecipes(results); 
+    setLoading(false); 
   };
 
   const navigateToFavorites = () => {
     if (!isAuthenticated) {
-      router.push("/login"); // Redirect to login page if not authenticated
+      router.push("/login");
     } else {
       router.push("/favorites");
     }
@@ -67,9 +81,9 @@ export default function HomePage() {
 
   const navigateToRecipeDetails = (recipeId) => {
     if (!isAuthenticated) {
-      router.push("/login"); // Redirect to login page if not authenticated
+      router.push("/login"); 
     } else {
-      router.push(`/recipes/${recipeId}`); // Navigate to recipe details page if authenticated
+      router.push(`/recipes/${recipeId}`);
     }
   };
 
@@ -80,7 +94,7 @@ export default function HomePage() {
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("token");
-    setIsAuthenticated(false); // Update authentication state
+    setIsAuthenticated(false); 
     router.push("/login");
   };
 
@@ -93,10 +107,10 @@ export default function HomePage() {
   };
 
   const navigateToLogin = () => {
-    router.push("/login"); // Redirect to login page
+    router.push("/login"); 
   };
 
-  // Close dropdown if clicked outside
+  
   const closeDropdown = (e) => {
     if (!e.target.closest(".profile-dropdown") && !e.target.closest(".CiUser")) {
       setDropdownOpen(false);
@@ -113,19 +127,19 @@ export default function HomePage() {
 
   return (
     <main className="relative pt-16 bg-gray-50 text-black dark:bg-gray-900 dark:text-white min-h-screen">
-      {/* Fixed Navbar */}
+     
       <div className="fixed top-0 left-0 w-full bg-gray-100 text-black dark:bg-gray-800 dark:text-white p-4 shadow-lg z-50 flex justify-between items-center">
         <a href="/" className="text-2xl font-bold">
           YummyLib
         </a>
 
         <div className="flex items-center space-x-6">
-          {/* Search Bar */}
+         
           <div className="hidden sm:block w-1/3">
             <SearchBar onSearch={handleSearch} />
           </div>
 
-          {/* Star Icon for Favorites */}
+         
           <div
             className="text-2xl cursor-pointer"
             onClick={navigateToFavorites}
@@ -133,22 +147,22 @@ export default function HomePage() {
             <CiStar className="text-yellow-500 dark:text-yellow-400" />
           </div>
 
-          {/* Random Recipe Icon */}
+       
           <div
             className="text-2xl cursor-pointer"
-            onClick={handleRandomRecipe} // Fetch random recipe on click
+            onClick={handleRandomRecipe} 
           >
             <CiShuffle className="text-blue-500 dark:text-blue-400" />
           </div>
 
-          {/* Profile Icon and Dropdown */}
+          
           <div className="relative flex items-center space-x-4">
             <ModeToggle />
             <CiUser
               className="text-2xl cursor-pointer CiUser"
               onClick={toggleDropdown}
             />
-            {/* Profile Dropdown */}
+           
             {dropdownOpen && (
               <div className="profile-dropdown absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 text-black dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 w-48 z-50">
                 <button
@@ -166,7 +180,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Login Dropdown */}
+       
             {!isAuthenticated && loginDropdownOpen && (
               <div className="profile-dropdown absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 text-black dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 w-48 z-50">
                 <button
@@ -181,9 +195,9 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Content Below Navbar with padding for space */}
+    
       <div className="pt-20">
-        {/* Search Bar for smaller screens */}
+        
         <div className="sm:hidden p-4">
           <SearchBar onSearch={handleSearch} />
         </div>
@@ -191,19 +205,19 @@ export default function HomePage() {
         {loading ? (
           <p className="text-center">Loading recipes...</p>
         ) : randomRecipe ? (
-          // Center the random recipe content
+          
           <div className="mt-6 flex justify-center">
             <div className="text-center">
-              <RecipeGrid recipes={[randomRecipe]} /> {/* Display only the random recipe */}
+              <RecipeGrid recipes={[randomRecipe]} />
             </div>
           </div>
         ) : filteredRecipes.length === 0 ? (
           <p className="text-center">No recipes found matching your search.</p>
         ) : (
-          // When rendering the recipe grid, use a click handler to navigate to the recipe details
+        
           <RecipeGrid
             recipes={filteredRecipes}
-            onClick={(recipeId) => navigateToRecipeDetails(recipeId)} // Pass the recipeId to the click handler
+            onClick={(recipeId) => navigateToRecipeDetails(recipeId)} 
           />
         )}
       </div>
