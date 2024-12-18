@@ -11,7 +11,6 @@ import 'react-toastify/dist/ReactToastify.css'; // Make sure to include the CSS 
 export default function RecipeCard({ id, title, image, strCategory, strArea }) {
   const [isFavorite, setIsFavorite] = useState(false);
 
-  // Check if the recipe is in the favorites when the component mounts
   useEffect(() => {
     const checkFavorite = async () => {
       const token = localStorage.getItem('token');

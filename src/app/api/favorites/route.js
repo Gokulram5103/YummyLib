@@ -2,6 +2,8 @@ import jwt from 'jsonwebtoken';
 import connectToDatabase from '../../lib/db';
 import Favorite from '../../models/Fav';
 
+const JWT_SECRET = 'fabfdfdc39dbfba8dd6e37a84c1c0bba34d43c716f6b5379cc5794fbdcf3b872'; // Directly added JWT secret
+
 export async function POST(req) {
   try {
     const token = req.headers.get('Authorization')?.split(' ')[1];
@@ -9,7 +11,7 @@ export async function POST(req) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET); // Using the direct JWT secret
 
     // Connect to the database
     await connectToDatabase();
@@ -39,7 +41,7 @@ export async function DELETE(req) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET); // Using the direct JWT secret
 
     // Connect to the database
     await connectToDatabase();
@@ -63,7 +65,7 @@ export async function GET(req) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET); // Using the direct JWT secret
 
     // Connect to the database
     await connectToDatabase();
