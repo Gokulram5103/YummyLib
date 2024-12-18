@@ -1,101 +1,207 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import RecipeGrid from "../app/components/RecipeGrid";
+import { fetchRecipes, fetchRandomRecipe } from "./lib/api";
+import { CiStar, CiUser, CiShuffle } from "react-icons/ci";
+import { ModeToggle } from "./components/ModeToggle";
+import SearchBar from "./components/SearchBar";
+
+export default function HomePage() {
+  const [recipes, setRecipes] = useState([]);
+  const [filteredRecipes, setFilteredRecipes] = useState([]);
+  const [randomRecipe, setRandomRecipe] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [loginDropdownOpen, setLoginDropdownOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Fetch recipes without authentication check
+    fetchRecipes()
+      .then((data) => {
+        setRecipes(data);
+        setFilteredRecipes(data); // Initialize filtered recipes
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching recipes:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  // Fetch random recipe when user clicks on the random icon
+  const handleRandomRecipe = async () => {
+    const recipe = await fetchRandomRecipe();
+    if (recipe) {
+      setRandomRecipe(recipe); // Update state with random recipe
+      setFilteredRecipes([]); // Clear filtered recipes when random recipe is selected
+    }
+  };
+
+  const handleSearch = (searchTerm) => {
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    const filtered = recipes.filter(
+      (recipe) =>
+        recipe.strMeal && // Ensure strMeal exists
+        recipe.strMeal.toLowerCase().includes(lowerCaseSearchTerm)
+    );
+    setFilteredRecipes(filtered);
+  };
+
+  const navigateToFavorites = () => {
+    const isAuthenticated = localStorage.getItem("isAuthenticated");
+    if (!isAuthenticated) {
+      router.push("/login"); // Redirect to login page if not authenticated
+    } else {
+      router.push("/favorites");
+    }
+  };
+
+  const navigateToRecipeDetails = (recipeId) => {
+    const isAuthenticated = localStorage.getItem("isAuthenticated");
+    if (!isAuthenticated) {
+      router.push("/login"); // Redirect to login page if not authenticated
+    } else {
+      router.push(`/recipes/${recipeId}`); // Navigate to recipe details page if authenticated
+    }
+  };
+
+  const toggleDropdown = () => {
+    setDropdownOpen((prev) => !prev);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
+
+  const navigateToProfile = () => {
+    router.push("/login");
+  };
+
+  const toggleLoginDropdown = () => {
+    setLoginDropdownOpen((prev) => !prev);
+  };
+
+  const navigateToLogin = () => {
+    router.push("/login"); // Redirect to login page
+  };
+
+  // Close dropdown if clicked outside
+  const closeDropdown = (e) => {
+    if (!e.target.closest(".profile-dropdown") && !e.target.closest(".CiUser")) {
+      setDropdownOpen(false);
+      setLoginDropdownOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("click", closeDropdown);
+    return () => {
+      document.removeEventListener("click", closeDropdown);
+    };
+  }, []);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <main className="relative pt-16 bg-gray-50 text-black dark:bg-gray-900 dark:text-white min-h-screen">
+      {/* Fixed Navbar */}
+      <div className="fixed top-0 left-0 w-full bg-gray-100 text-black dark:bg-gray-800 dark:text-white p-4 shadow-lg z-50 flex justify-between items-center">
+        <a href="/" className="text-2xl font-bold">
+          YummyLib
+        </a>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <div className="flex items-center space-x-6">
+          {/* Search Bar */}
+          <div className="hidden sm:block w-1/3">
+            <SearchBar onSearch={handleSearch} />
+          </div>
+
+          {/* Star Icon for Favorites */}
+          <div
+            className="text-2xl cursor-pointer"
+            onClick={navigateToFavorites}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+            <CiStar className="text-yellow-500 dark:text-yellow-400" />
+          </div>
+
+          {/* Random Recipe Icon */}
+          <div
+            className="text-2xl cursor-pointer"
+            onClick={handleRandomRecipe} // Fetch random recipe on click
+          >
+            <CiShuffle className="text-blue-500 dark:text-blue-400" />
+          </div>
+
+          {/* Profile Icon and Dropdown */}
+          <div className="relative flex items-center space-x-4">
+            <ModeToggle />
+            <CiUser
+              className="text-2xl cursor-pointer CiUser"
+              onClick={toggleDropdown}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {/* Profile Dropdown */}
+            {dropdownOpen && (
+              <div className="profile-dropdown absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 text-black dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 w-48 z-50">
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left py-2 px-4 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Logout
+                </button>
+                <button
+                  onClick={navigateToProfile}
+                  className="block w-full text-left py-2 px-4 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Login
+                </button>
+              </div>
+            )}
+
+            {/* Login Dropdown */}
+            {!localStorage.getItem("isAuthenticated") && loginDropdownOpen && (
+              <div className="profile-dropdown absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 text-black dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 w-48 z-50">
+                <button
+                  onClick={navigateToLogin}
+                  className="block w-full text-left py-2 px-4 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Login
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </div>
+
+      {/* Content Below Navbar with padding for space */}
+      <div className="pt-20">
+
+        {/* Search Bar for smaller screens */}
+        <div className="sm:hidden p-4">
+          <SearchBar onSearch={handleSearch} />
+        </div>
+
+        {loading ? (
+          <p className="text-center">Loading recipes...</p>
+        ) : randomRecipe ? (
+          // Center the random recipe content
+          <div className="mt-6 flex justify-center">
+            <div className="text-center">
+              <RecipeGrid recipes={[randomRecipe]} /> {/* Display only the random recipe */}
+            </div>
+          </div>
+        ) : filteredRecipes.length === 0 ? (
+          <p className="text-center">No recipes found matching your search.</p>
+        ) : (
+          // When rendering the recipe grid, use a click handler to navigate to the recipe details
+          <RecipeGrid
+            recipes={filteredRecipes}
+            onClick={(recipeId) => navigateToRecipeDetails(recipeId)} // Pass the recipeId to the click handler
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        )}
+      </div>
+    </main>
   );
 }
