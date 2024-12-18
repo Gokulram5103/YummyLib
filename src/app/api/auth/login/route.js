@@ -3,6 +3,9 @@ import jwt from "jsonwebtoken";
 import connectToDatabase from "../../../lib/db";
 import User from "../../../models/User";
 
+// Hardcoding the JWT_SECRET directly (not recommended for production)
+const JWT_SECRET = "fabfdfdc39dbfba8dd6e37a84c1c0bba34d43c716f6b5379cc5794fbdcf3b872";
+
 export async function POST(req) {
   try {
     const { username, password } = await req.json();
@@ -27,8 +30,8 @@ export async function POST(req) {
       );
     }
 
-    // Generate a JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    // Generate a JWT token using the hardcoded JWT_SECRET
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
       expiresIn: "1h",
     });
 
