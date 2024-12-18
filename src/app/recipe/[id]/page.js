@@ -1,8 +1,7 @@
 import axios from "axios";
 import { CiHeart } from "react-icons/ci";
-import Link from "next/link"; // For back navigation
+import Link from "next/link"; 
 
-// Function to fetch recipe details
 async function fetchRecipeDetails(id) {
   const response = await axios.get(
     `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
@@ -29,7 +28,7 @@ export default async function RecipeDetailsPage({ params }) {
     })
     .filter(Boolean);
 
-  // Split instructions into individual steps
+
   const instructions = recipe.strInstructions
     ? recipe.strInstructions.split("\n").map((step, index) => ({
         id: index + 1,
@@ -40,14 +39,14 @@ export default async function RecipeDetailsPage({ params }) {
   return (
     <main className="p-8 max-w-7xl mx-auto bg-gradient-to-b from-teal-50 via-white to-pink-50 dark:bg-gray-800 dark:text-white rounded-lg shadow-xl relative">
 
-      {/* Back to Home Button */}
+    
       <div className="mb-6">
         <Link href="/" className="text-blue-600 font-bold hover:underline text-lg dark:text-blue-400">
           &lt; Back to Home
         </Link>
       </div>
 
-      {/* Favorite Icon */}
+    
       <div className="absolute top-4 right-4 text-3xl text-gray-500 cursor-pointer hover:text-red-500 transition-colors">
         <CiHeart />
       </div>
@@ -58,11 +57,11 @@ export default async function RecipeDetailsPage({ params }) {
             src={recipe.strMealThumb}
             alt={recipe.strMeal}
             className="w-full h-auto rounded-lg shadow-lg object-cover border-4 border-teal-300 dark:border-teal-600"
-            style={{ maxWidth: "80%", margin: "0 auto" }} // Improved image size and positioning
+            style={{ maxWidth: "80%", margin: "0 auto" }} 
           />
         </div>
 
-        {/* Recipe Details */}
+
         <div className="lg:w-1/2 bg-white p-6 rounded-lg shadow-lg dark:bg-gray-700 dark:text-white">
           <h1 className="text-5xl font-extrabold text-teal-700 mb-4 dark:text-teal-400">
             {recipe.strMeal}
@@ -73,7 +72,6 @@ export default async function RecipeDetailsPage({ params }) {
             Follow the instructions to prepare this dish perfectly!
           </p>
 
-          {/* Ingredients */}
           <section className="mb-8">
             <h2 className="text-3xl font-bold text-pink-600 mb-3 underline dark:text-pink-400">
               Ingredients
@@ -92,7 +90,7 @@ export default async function RecipeDetailsPage({ params }) {
         </div>
       </div>
 
-      {/* Instructions Section */}
+     
       <section className="mt-10 p-6 bg-pink-100 rounded-lg shadow-md dark:bg-gray-600 dark:text-white">
         <h2 className="text-3xl font-bold text-pink-700 mb-4 dark:text-pink-400">Instructions</h2>
         <div className="space-y-4">

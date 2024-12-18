@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
@@ -10,30 +10,35 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isClient, setIsClient] = useState(false); // Track if we are on the client side
   const router = useRouter();
+
+  useEffect(() => {
+    setIsClient(true); // Mark that we are on the client side
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null); // Reset any previous errors
+    setError(null);
 
     try {
       const { data } = await axios.post("/api/auth/login", formData);
 
-      // Store the authentication state, token, and user details
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userDetails", JSON.stringify(data.user)); // Assuming the response contains the user object
+      // Only use localStorage on the client side
+      if (isClient) {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userDetails", JSON.stringify(data.user));
+      }
 
-      // Display success toast
       toast.success("Login successful!");
 
-      // Redirect to profile page after successful login
-      router.push("/"); // Redirect to profile page
+      router.push("/"); // Redirect to home page
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Error logging in. Please try again.";
       setError(errorMessage);
-      toast.error(errorMessage); // Show error toast
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +48,6 @@ export default function LoginPage() {
     <div className="max-w-md mx-auto mt-20 p-6 border rounded-lg shadow-lg">
       <h1 className="text-2xl font-bold mb-4 text-center">Login</h1>
 
-      {/* Display error message */}
       {error && (
         <div className="bg-red-100 text-red-700 p-3 mb-4 rounded">
           {error}

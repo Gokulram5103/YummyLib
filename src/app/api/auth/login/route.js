@@ -9,7 +9,6 @@ export async function POST(req) {
 
     await connectToDatabase();
 
-    // Find user in the database
     const user = await User.findOne({ username });
     if (!user) {
       return new Response(
@@ -18,7 +17,7 @@ export async function POST(req) {
       );
     }
 
-    // Validate the password
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return new Response(
@@ -27,7 +26,6 @@ export async function POST(req) {
       );
     }
 
-    // Generate a JWT token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });

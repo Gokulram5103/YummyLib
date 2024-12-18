@@ -15,9 +15,16 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loginDropdownOpen, setLoginDropdownOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    // Check if we are on the client side before accessing localStorage
+    if (typeof window !== 'undefined') {
+      const authStatus = localStorage.getItem("isAuthenticated");
+      setIsAuthenticated(authStatus === "true");
+    }
+
     // Fetch recipes without authentication check
     fetchRecipes()
       .then((data) => {
@@ -51,7 +58,6 @@ export default function HomePage() {
   };
 
   const navigateToFavorites = () => {
-    const isAuthenticated = localStorage.getItem("isAuthenticated");
     if (!isAuthenticated) {
       router.push("/login"); // Redirect to login page if not authenticated
     } else {
@@ -60,7 +66,6 @@ export default function HomePage() {
   };
 
   const navigateToRecipeDetails = (recipeId) => {
-    const isAuthenticated = localStorage.getItem("isAuthenticated");
     if (!isAuthenticated) {
       router.push("/login"); // Redirect to login page if not authenticated
     } else {
@@ -75,6 +80,7 @@ export default function HomePage() {
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("token");
+    setIsAuthenticated(false); // Update authentication state
     router.push("/login");
   };
 
@@ -161,7 +167,7 @@ export default function HomePage() {
             )}
 
             {/* Login Dropdown */}
-            {!localStorage.getItem("isAuthenticated") && loginDropdownOpen && (
+            {!isAuthenticated && loginDropdownOpen && (
               <div className="profile-dropdown absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 text-black dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 w-48 z-50">
                 <button
                   onClick={navigateToLogin}
@@ -177,7 +183,6 @@ export default function HomePage() {
 
       {/* Content Below Navbar with padding for space */}
       <div className="pt-20">
-
         {/* Search Bar for smaller screens */}
         <div className="sm:hidden p-4">
           <SearchBar onSearch={handleSearch} />
