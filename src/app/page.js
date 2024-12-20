@@ -51,12 +51,21 @@ export default function HomePage() {
 
  
   const handleRandomRecipe = async () => {
-    const recipe = await fetchSearchResults("random");
-    if (recipe && recipe.length > 0) {
-      setRandomRecipe(recipe[0]); 
-      setFilteredRecipes([]); 
+    setLoading(true); 
+    try {
+      const response = await fetch("https://www.themealdb.com/api/json/v1/1/random.php");
+      const data = await response.json();
+      if (data.meals && data.meals.length > 0) {
+        setRandomRecipe(data.meals[0]); 
+        setFilteredRecipes([]);
+      }
+    } catch (error) {
+      console.error("Error fetching random recipe:", error);
+    } finally {
+      setLoading(false); 
     }
   };
+  
 
   
   const handleSearch = async (searchTerm) => {
